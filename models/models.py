@@ -176,7 +176,7 @@ class StableLM:
     def generate(self, text, temperature=0.7, system="", top_p=0.8, max_new_tokens=256):
         if len(system) > 0:
             system = f"<|system|>\n{system}<|endoftext|>\n"
-        query = system + "<|user|>\n{text}<|endoftext|>\n<|assistant|>\n"
+        query = system + f"<|user|>\n{text}<|endoftext|>\n<|assistant|>\n"
 
         inputs = self.tokenizer(query, return_tensors="pt", add_special_tokens=False,return_token_type_ids=False)
         for k in inputs:
