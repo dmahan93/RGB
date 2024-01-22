@@ -162,6 +162,30 @@ class LLama2:
         response = self.tokenizer.decode(outputs[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)
         return response
 
+class StableLM:
+    def __init__(self,plm) -> None:
+        self.tokenizer = AutoTokenizer.from_pretrained(plm, trust_remote_code=True)
+
+        self.model = AutoModelForCausalLM.from_pretrained(
+            plm,
+            torch_dtype=torch.float16,
+            trust_remote_code=True,
+            device_map='auto'
+        )
+
+    def generate(self, text, temperature=0.7, system="", top_p=0.8, max_new_tokens=256):
+        if len(system) > 0:
+            system = f"<|system|>\n{system}<|endoftext|>\n"
+        query = system + "<|user|>\n{text}<|endoftext|>\n<|assistant|>\n"
+
+        inputs = self.tokenizer(query, return_tensors="pt", add_special_tokens=False,return_token_type_ids=False)
+        for k in inputs:
+            inputs[k] = inputs[k].cuda()
+
+        outputs = self.model.generate(**inputs, do_sample=True, temperature=temperature, top_p=top_p, max_length=max_new_tokens + inputs['input_ids'].size(-1))
+        response = self.tokenizer.decode(outputs[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)
+        return response
+
 import requests
 
 class OpenAIAPIModel():
